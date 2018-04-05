@@ -1,11 +1,3 @@
-copy minions/sh/env_global.sh:
-  file.managed:
-    - name: /etc/profile.d/env-global.sh
-    - source: salt://minions/sh/env_global.sh
-    - user: root
-    - group: root
-    - mode: 644
-
 # ngx
 init ngx repo:
   file.managed:
