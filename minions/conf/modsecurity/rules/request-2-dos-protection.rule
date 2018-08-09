@@ -2,38 +2,25 @@
 # 检测拒绝服务攻击的反自动化规则
 #
 
-# -- [[ Anti-Automation / DoS Protection ]] ------------------------------------
-#
-# Optional DoS protection against clients making requests too quickly.
-#
-# When a client is making more than 6 requests (excluding static files) within
-# 5 seconds, this is considered a 'burst'. After two bursts, the client is
-# blocked for 5 min.
-#
-# Requests to static files are not counted towards DoS; they are listed in the
-# 'tx.static_extensions' setting, which you can change in this file (see
-# section "HTTP Policy Settings").
-#
-# For a detailed description, see rule file REQUEST-912-DOS-PROTECTION.conf.
 #
 # Uncomment this rule to use this feature:
 #
 SecAction \
- "id:900700,\
+ "id:2001,\
   phase:1,\
   nolog,\
   pass,\
   t:none,\
   setvar:'tx.static_extensions=/.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/',\
-  setvar:'tx.dos_burst_time_slice=5',\
-  setvar:'tx.dos_counter_threshold=6',\
-  setvar:'tx.dos_block_timeout=300'"
+  setvar:'tx.dos_burst_time_slice=60',\
+  setvar:'tx.dos_counter_threshold=100',\
+  setvar:'tx.dos_block_timeout=120'"
 
 #
 # Skip if variables defining DoS protection are not set
 #
 SecRule &TX:dos_burst_time_slice "@eq 0" \
-    "id:912100,\
+    "id:2002,\
     phase:1,\
     t:none,\
     nolog,\
@@ -43,16 +30,6 @@ SecRule &TX:dos_burst_time_slice "@eq 0" \
     SecRule &TX:dos_counter_threshold "@eq 0" "chain"
     SecRule &TX:dos_block_timeout "@eq 0"
 
-SecRule &TX:dos_burst_time_slice "@eq 0" \
-    "id:912110,\
-    phase:5,\
-    t:none,\
-    nolog,\
-    pass,\
-    chain,\
-    skipAfter:END_DOS_PROTECTION_CHECKS"
-    SecRule &TX:dos_counter_threshold "@eq 0" "chain"
-    SecRule &TX:dos_block_timeout "@eq 0"
 
 #
 # -=[ Anti-Automation / DoS Protection : Block ]=-
@@ -64,8 +41,8 @@ SecRule &TX:dos_burst_time_slice "@eq 0" \
 SecRule IP:DOS_BLOCK "@eq 1" \
     "chain,\
     phase:1,\
-    id:912120,\
-    drop,\
+    id:2003,\
+    block,\
     tag:'application-multi',\
     tag:'language-multi',\
     tag:'platform-multi',\
@@ -84,9 +61,9 @@ SecRule IP:DOS_BLOCK "@eq 1" \
 #
 SecRule IP:DOS_BLOCK "@eq 1" \
     "phase:1,\
-    id:912130,\
+    id:2004,\
     t:none,\
-    drop,\
+    block,\
     nolog,\
     tag:'application-multi',\
     tag:'language-multi',\
@@ -104,7 +81,7 @@ SecRule IP:DOS_BLOCK "@eq 1" \
 #
 SecRule IP:DOS_BLOCK "@eq 1" \
     "phase:5,\
-    id:912140,\
+    id:2005,\
     t:none,\
     nolog,\
     tag:'application-multi',\
@@ -120,7 +97,7 @@ SecRule IP:DOS_BLOCK "@eq 1" \
 #
 SecRule REQUEST_BASENAME ".*?(\.[a-z0-9]{1,10})?$" \
     "phase:5,\
-    id:912150,\
+    id:2006,\
     t:none,\
     t:lowercase,\
     nolog,\
@@ -140,8 +117,8 @@ SecRule REQUEST_BASENAME ".*?(\.[a-z0-9]{1,10})?$" \
 # Check DOS Counter
 # If the request count is greater than or equal to user settings,
 # we raise the burst counter. This happens via two separate rules:
-# - 912160: raise from 0 to 1
-# - 912161: raise from 1 to 2
+# - 2007: raise from 0 to 1
+# - 2008: raise from 1 to 2
 #
 # This approach with two rules avoids raising the burst counter
 # from 0 to 2 via two concurrent requests. We do not raise the
@@ -150,7 +127,7 @@ SecRule REQUEST_BASENAME ".*?(\.[a-z0-9]{1,10})?$" \
 #
 SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
     "phase:5,\
-    id:912160,\
+    id:2007,\
     t:none,\
     nolog,\
     pass,\
@@ -167,7 +144,7 @@ SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
 
 SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
     "phase:5,\
-    id:912161,\
+    id:2008,\
     t:none,\
     nolog,\
     pass,\
@@ -181,7 +158,6 @@ SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
         expirevar:ip.dos_burst_counter=%{tx.dos_burst_time_slice},\
         setvar:!ip.dos_counter"
 
-
 #
 # Check DOS Burst Counter and set Block
 # Check the burst counter - if greater than or equal to 2, then we set the IP
@@ -189,7 +165,7 @@ SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
 #
 SecRule IP:DOS_BURST_COUNTER "@ge 2" \
     "phase:5,\
-    id:912170,\
+    id:2009,\
     t:none,\
     log,\
     pass,\
@@ -206,11 +182,11 @@ SecRule IP:DOS_BURST_COUNTER "@ge 2" \
 # Check the burst counter - if greater than or equal to 1, then we set the IP
 # block variable for a given expiry and issue an alert.
 #
-# This is a stricter sibling of rule 912170.
+# This is a stricter sibling of rule 2009.
 #
 SecRule IP:DOS_BURST_COUNTER "@ge 1" \
     "phase:5,\
-    id:912171,\
+    id:2010,\
     t:none,\
     log,\
     pass,\
@@ -224,4 +200,4 @@ SecRule IP:DOS_BURST_COUNTER "@ge 1" \
     expirevar:ip.dos_block=%{tx.dos_block_timeout}"
 
 # 结束标记
-SecMarker END_DOS_PROTECTION_CHECKS
+SecMarker "END_DOS_PROTECTION_CHECKS"
