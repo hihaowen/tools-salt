@@ -17,7 +17,7 @@ SecRule TX:SCANNER_DETECTION_SWITCH "@lt 1" "phase:2,id:1002,nolog,pass,skipAfte
 
 # 阻塞包含特定的UA的请求
 # curl -X POST -H 'User-Agent: sqlmap test header' -F 'arg1=val1' 'http://localhost:8081/test.php'
-SecRule REQUEST_HEADERS:User-Agent "@pmFromFile /home/tools/salt/minions/conf/modsecurity/data/scanners-user-agents.data" \
+SecRule REQUEST_HEADERS:User-Agent "@pmFromFile /etc/nginx/modsecurity/data/scanners-user-agents.data" \
  "msg:'Found User-Agent associated with security scanner',\
   id:1100,\
   phase:request,\
