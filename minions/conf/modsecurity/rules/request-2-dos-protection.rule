@@ -42,7 +42,7 @@ SecRule IP:DOS_BLOCK "@eq 1" \
     "chain,\
     phase:1,\
     id:2003,\
-    block,\
+    drop,\
     tag:'application-multi',\
     tag:'language-multi',\
     tag:'platform-multi',\
@@ -63,7 +63,7 @@ SecRule IP:DOS_BLOCK "@eq 1" \
     "phase:1,\
     id:2004,\
     t:none,\
-    block,\
+    drop,\
     nolog,\
     tag:'application-multi',\
     tag:'language-multi',\
