@@ -12,9 +12,10 @@ SecAction \
   pass,\
   t:none,\
   setvar:'tx.static_extensions=/.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/',\
-  setvar:'tx.dos_burst_time_slice=60',\
-  setvar:'tx.dos_counter_threshold=100',\
-  setvar:'tx.dos_block_timeout=120'"
+  setvar:'tx.dos_burst_time_slice=5',\
+  setvar:'tx.dos_counter_threshold=8',\
+  setvar:'tx.dos_block_timeout=60'"
+
 
 #
 # Skip if variables defining DoS protection are not set
@@ -32,8 +33,21 @@ SecRule &TX:dos_burst_time_slice "@eq 0" \
 
 
 #
+# Skip if IP is local
+#
+ SecRule REMOTE_ADDR "@ipMatch 127.0.0.1,10.0.0.0/8,172.0.0.0/8" \
+    "phase:1,\
+    id:2011,\
+    t:none,\
+    nolog,\
+    pass,\
+    skipAfter:END_DOS_PROTECTION_CHECKS"
+
+
+#
 # -=[ Anti-Automation / DoS Protection : Block ]=-
 #
+
 
 #
 # Block and track # of requests and log
@@ -90,6 +104,8 @@ SecRule IP:DOS_BLOCK "@eq 1" \
     tag:'attack-dos',\
     pass,\
     skipAfter:END_DOS_PROTECTION_CHECKS"
+
+
 
 
 #

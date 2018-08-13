@@ -59,15 +59,6 @@ make_nginx_from_source:
 # 配置、bin执行文件初始化
 # 注意: 这里会动态更改ngx配置,有一些写死的位置,不是很灵活,需要手动更改或执行完之后再 nginx -t 验证下
 init_env:
-  file.managed:
-    - name: /etc/nginx/modules/ngx_http_modsecurity_module.so
-    - source: /home/work/haowenzhi/nginx/objs/ngx_http_modsecurity_module.so
-    - user: root
-    - group: root
-    - mode: 0755
-    - unless: test -f /etc/nginx/modules/ngx_http_modsecurity_module.so
-    - require:
-      - file: make_nginx_from_source
   cmd.run:
     - name: mkdir -p /etc/nginx/modules/ && sed -i '62i ModSecurityEnabled on; ModSecurityConfig /etc/nginx/modsecurity/modsecurity.conf;' /etc/nginx/nginx.conf && cp /usr/sbin/nginx /usr/sbin/nginx_old_`date +"%Y%m%d%H"` && cp /home/work/haowenzhi/nginx/objs/nginx /usr/sbin/nginx && mkdir -p /etc/nginx/modsecurity && mkdir -p /home/work/logs/modsecurity && chown -R work:work /home/work/logs/modsecurity && chmod -R 0777 /home/work/logs/modsecurity && cp -R /home/tools/salt/minions/conf/modsecurity/* /etc/nginx/modsecurity/
 
