@@ -13,8 +13,8 @@ SecAction \
   t:none,\
   setvar:'tx.static_extensions=/.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/',\
   setvar:'tx.dos_burst_time_slice=5',\
-  setvar:'tx.dos_counter_threshold=8',\
-  setvar:'tx.dos_block_timeout=60'"
+  setvar:'tx.dos_counter_threshold=20',\
+  setvar:'tx.dos_block_timeout=120'"
 
 
 #
@@ -106,8 +106,6 @@ SecRule IP:DOS_BLOCK "@eq 1" \
     skipAfter:END_DOS_PROTECTION_CHECKS"
 
 
-
-
 #
 # DOS Counter: Count the number of requests to non-static resources
 #
@@ -174,6 +172,7 @@ SecRule IP:DOS_COUNTER "@ge %{tx.dos_counter_threshold}" \
         expirevar:ip.dos_burst_counter=%{tx.dos_burst_time_slice},\
         setvar:!ip.dos_counter"
 
+
 #
 # Check DOS Burst Counter and set Block
 # Check the burst counter - if greater than or equal to 2, then we set the IP
@@ -193,6 +192,7 @@ SecRule IP:DOS_BURST_COUNTER "@ge 2" \
     setvar:ip.dos_block=1,\
     expirevar:ip.dos_block=%{tx.dos_block_timeout}"
 
+
 #
 # Check DOS Burst Counter and set Block
 # Check the burst counter - if greater than or equal to 1, then we set the IP
@@ -200,20 +200,20 @@ SecRule IP:DOS_BURST_COUNTER "@ge 2" \
 #
 # This is a stricter sibling of rule 2009.
 #
-SecRule IP:DOS_BURST_COUNTER "@ge 1" \
-    "phase:5,\
-    id:2010,\
-    t:none,\
-    log,\
-    pass,\
-    tag:'application-multi',\
-    tag:'language-multi',\
-    tag:'platform-multi',\
-    tag:'attack-dos',\
-    tag:'paranoia-level/2',\
-    msg:'Potential Denial of Service (DoS) Attack from %{tx.real_ip} - # of Request Bursts: %{ip.dos_burst_counter}',\
-    setvar:ip.dos_block=1,\
-    expirevar:ip.dos_block=%{tx.dos_block_timeout}"
+# SecRule IP:DOS_BURST_COUNTER "@ge 1" \
+#     "phase:5,\
+#     id:2010,\
+#     t:none,\
+#     log,\
+#     pass,\
+#     tag:'application-multi',\
+#     tag:'language-multi',\
+#     tag:'platform-multi',\
+#     tag:'attack-dos',\
+#     tag:'paranoia-level/2',\
+#     msg:'Potential Denial of Service (DoS) Attack from %{tx.real_ip} - # of Request Bursts: %{ip.dos_burst_counter}',\
+#     setvar:ip.dos_block=1,\
+#     expirevar:ip.dos_block=%{tx.dos_block_timeout}"
 
 # 结束标记
 SecMarker "END_DOS_PROTECTION_CHECKS"
